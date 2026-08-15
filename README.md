@@ -31,7 +31,6 @@ keys and self-host the whole thing with one command.
 
 **AI providers**
 - ✅ Bring-your-own **OpenAI** (Responses API) and **Anthropic** (Messages API) keys — agency-level, encrypted, and validated when saved
-- 🚧 Azure OpenAI *(planned)*
 
 **Channels**
 - ✅ **WhatsApp** through Baileys — QR link, per-client number, encrypted persistent session
