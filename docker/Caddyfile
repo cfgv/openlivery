@@ -1,0 +1,10 @@
+# Public entry point. Caddy terminates HTTPS (automatic certificates) and routes
+# API traffic to the backend and everything else to the frontend, on one domain.
+{$DOMAIN} {
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

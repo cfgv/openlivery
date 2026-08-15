@@ -1,0 +1,40 @@
+# Production overlay: adds a Caddy reverse proxy with automatic HTTPS and points
+# the app at the public domain. Use with the base file:
+#   docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+# or simply `make deploy`. Requires DOMAIN set in .env.docker, DNS pointing at
+# this host, and ports 80/443 open. Everything is served from a single domain,
+# so the frontend and API share one origin and the session cookie just works.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: openlivery_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+
+  api:
+    environment:
+      FRONTEND_URL: https://${DOMAIN}
+      COOKIE_SECURE: "true"
+
+  web:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN}
+    environment:
+      NEXT_PUBLIC_API_URL: https://${DOMAIN}
+
+volumes:
+  caddy_data:
+  caddy_config:

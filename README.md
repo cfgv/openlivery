@@ -70,6 +70,10 @@ make up                            # build, start, migrate
 Then open **http://localhost:3000** (API docs at **http://localhost:8000/docs**).
 Ports clashing? `API_PORT=8001 WEB_PORT=3001 DB_PORT=5433 make up`.
 
+**Deploy to a public server** with automatic HTTPS: point a domain at the host,
+set `DOMAIN=your.domain` in `.env.docker` and run `make deploy` (a bundled Caddy
+reverse proxy handles TLS and routing).
+
 Full setup, environment variables, backups, non-Docker install and WhatsApp
 linking are in **[docs/self-hosting.md](docs/self-hosting.md)**.
 

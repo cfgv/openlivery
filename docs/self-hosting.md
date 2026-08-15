@@ -78,24 +78,36 @@ hand, copy `.env.docker.example` to `.env.docker` and replace every `CHANGE_*`.
 
 ## Public / HTTPS deployment
 
-For a server reachable from the internet (not just `localhost`):
+For a server reachable from the internet, the stack includes an optional **Caddy**
+reverse proxy that gets and renews HTTPS certificates automatically and serves the
+whole app from a single domain (frontend + API share one origin, so the session
+cookie just works).
 
-1. **Terminate TLS** with a reverse proxy (Caddy, nginx or Traefik) in front of
-   the stack. OpenLivery does not ship one.
-2. **Recommended topology:** serve the frontend and the API under the **same
-   site** — e.g. `app.example.com` (web) and `api.example.com` (API), or one
-   domain with the API behind a `/api` path. Same registrable domain keeps the
-   session cookie working with `COOKIE_SAMESITE=lax`.
-3. Set, before starting:
-   - `FRONTEND_URL=https://app.example.com`
-   - `NEXT_PUBLIC_API_URL=https://api.example.com` (baked at build — rebuild the
-     web image after changing it)
-   - `COOKIE_SECURE=true`
-   - `BIND_HOST=0.0.0.0` if the proxy runs on the same host and connects over the
-     published ports (or keep `127.0.0.1` and proxy to the container network).
-4. If the frontend and API end up on **different registrable domains**, also set
-   `COOKIE_SAMESITE=none` (which requires `COOKIE_SECURE=true`); otherwise the
-   browser will not send the session cookie and login will fail.
+1. On a host with Docker, point your domain's DNS (an `A` record) at the server's
+   IP and open ports **80** and **443**.
+2. Set the domain in `.env.docker`:
+
+   ```bash
+   DOMAIN=agency.example.com
+   ```
+
+3. Deploy:
+
+   ```bash
+   make deploy
+   ```
+
+`make deploy` starts the base stack plus Caddy using `docker-compose.prod.yml`.
+Caddy issues the TLS certificate on first request and routes `/api/*` to the
+backend and everything else to the frontend. `FRONTEND_URL`, `NEXT_PUBLIC_API_URL`
+and `COOKIE_SECURE=true` are set for the domain automatically, so there is nothing
+else to configure. Keep `BIND_HOST=127.0.0.1` (the default) so only Caddy is
+exposed publicly.
+
+Under the hood this is `docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d`;
+run it directly if you prefer. To use your own reverse proxy instead, skip the
+prod overlay and set `FRONTEND_URL`, `NEXT_PUBLIC_API_URL` and `COOKIE_SECURE`
+yourself.
 
 Each deployment is a **single agency** (the first registered user is its admin).
 Provider keys are per-agency and brought by the deployer.
