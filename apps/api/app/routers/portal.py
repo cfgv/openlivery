@@ -96,13 +96,14 @@ def portal_login(slug: str, payload: PortalLoginRequest, response: Response, db:
         or not verify_password(payload.password, client.portal_password_hash)
     ):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
+    settings = get_settings()
     response.set_cookie(
         key="portal_access_token",
         value=create_portal_token(str(client.id), client.portal_slug),
         httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=get_settings().access_token_minutes * 60,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        max_age=settings.access_token_minutes * 60,
         path="/",
     )
     agency = db.get(Agency, client.agency_id)

@@ -69,10 +69,36 @@ hand, copy `.env.docker.example` to `.env.docker` and replace every `CHANGE_*`.
 | `WHATSAPP_BRIDGE_TOKEN` | Backend + bridge | Authenticates the private backend↔bridge calls. |
 | `FRONTEND_URL` | Backend | Origin allowed by CORS; usually `http://localhost:3000`. |
 | `NEXT_PUBLIC_API_URL` | Browser / frontend build | Address the browser uses to reach the API. |
+| `COOKIE_SECURE` | Backend | `true` behind HTTPS so the session cookie is only sent over TLS. |
+| `COOKIE_SAMESITE` | Backend | `lax` (default). Use `none` when the frontend and API are on different sites (requires `COOKIE_SECURE=true`). |
 | `ACCESS_TOKEN_MINUTES` | Backend | Session lifetime. |
 | `WHATSAPP_LOG_LEVEL` | Bridge | Log level; `silent` avoids exposing sensitive data. |
 | `API_PORT`, `WEB_PORT`, `DB_PORT` | Host | Host ports (defaults `8000` / `3000` / `5432`). |
 | `BIND_HOST` | Host | Bind address: `127.0.0.1` (local) or `0.0.0.0` (expose on a server). |
+
+## Public / HTTPS deployment
+
+For a server reachable from the internet (not just `localhost`):
+
+1. **Terminate TLS** with a reverse proxy (Caddy, nginx or Traefik) in front of
+   the stack. OpenLivery does not ship one.
+2. **Recommended topology:** serve the frontend and the API under the **same
+   site** — e.g. `app.example.com` (web) and `api.example.com` (API), or one
+   domain with the API behind a `/api` path. Same registrable domain keeps the
+   session cookie working with `COOKIE_SAMESITE=lax`.
+3. Set, before starting:
+   - `FRONTEND_URL=https://app.example.com`
+   - `NEXT_PUBLIC_API_URL=https://api.example.com` (baked at build — rebuild the
+     web image after changing it)
+   - `COOKIE_SECURE=true`
+   - `BIND_HOST=0.0.0.0` if the proxy runs on the same host and connects over the
+     published ports (or keep `127.0.0.1` and proxy to the container network).
+4. If the frontend and API end up on **different registrable domains**, also set
+   `COOKIE_SAMESITE=none` (which requires `COOKIE_SECURE=true`); otherwise the
+   browser will not send the session cookie and login will fail.
+
+Each deployment is a **single agency** (the first registered user is its admin).
+Provider keys are per-agency and brought by the deployer.
 
 ## Day-to-day operation
 

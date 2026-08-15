@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     encryption_key: str = "dev-local-change-this-key-too"
     frontend_url: str = "http://localhost:3000"
     access_token_minutes: int = 60 * 24 * 7
+    # Session cookie flags. Defaults suit local HTTP; set cookie_secure=true (and
+    # cookie_samesite=none when the frontend and API are on different sites)
+    # behind HTTPS in production.
+    cookie_secure: bool = False
+    cookie_samesite: str = "lax"
     storage_dir: Path = APP_DIR / "storage"
     backend_url: str = "http://localhost:8000"
     whatsapp_bridge_url: str = "http://localhost:3101"
