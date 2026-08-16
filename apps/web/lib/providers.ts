@@ -6,6 +6,9 @@ export const PROVIDERS = [
     keyPlaceholder: "sk-proj-...",
     keyUrl: "https://platform.openai.com/api-keys",
     models: [
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-5.6-luna",
       "gpt-5.5",
       "gpt-5.4",
       "gpt-5.4-mini",
@@ -41,7 +44,7 @@ export type ProviderId = (typeof PROVIDERS)[number]["id"];
 // Transcription models for the audio-recognition capability (OpenAI).
 export const AUDIO_MODELS = ["whisper-1", "gpt-4o-transcribe", "gpt-4o-mini-transcribe", "gpt-4o-transcribe-diarize"] as const;
 // Vision-capable models for the image-recognition capability.
-export const IMAGE_MODELS = ["gpt-4.1", "gpt-4.1-mini", "gpt-5.5", "gpt-5.4", "gpt-5", "gpt-5-mini"] as const;
+export const IMAGE_MODELS = ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-4.1", "gpt-4.1-mini", "gpt-5.5", "gpt-5.4", "gpt-5", "gpt-5-mini"] as const;
 
 export function providerLabel(id: string): string {
   return PROVIDERS.find((p) => p.id === id)?.label ?? id;
