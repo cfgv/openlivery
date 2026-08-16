@@ -51,6 +51,7 @@ h1, h2, h3, .brand { font-family: var(--font-manrope), sans-serif; }
 .user-meta span { color: #808aa4; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .main-content { min-height: 100vh; margin-left: 252px; }
 .page { max-width: 1420px; margin: 0 auto; padding: 43px 44px 64px; }
+.page > * + * { margin-top: 21px; }
 .mobile-menu, .sidebar-close { display: none; }
 .app-loader, .page-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted); }
 .page-loading { min-height: 60vh; }
