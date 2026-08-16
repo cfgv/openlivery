@@ -9,6 +9,12 @@ and are released together.
 
 ## [Unreleased]
 
+### Documentation
+
+- Full documentation site at [openlivery.com/docs](https://openlivery.com/docs) with per-feature guides in English and Spanish.
+- README restructured around the documentation site, with each feature linking to its guide.
+- Corrected the WhatsApp inbound route in `CLAUDE.md`.
+
 ## [0.1.0] - 2026-08-16
 
 First tagged release.
