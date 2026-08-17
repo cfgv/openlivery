@@ -32,6 +32,7 @@ const en = {
   composerLocked: "Take over to reply",
   send: "Send",
   loading: "Loading conversations…",
+  unreadCount: "{count} unread",
 };
 
 const es: typeof en = {
@@ -67,6 +68,7 @@ const es: typeof en = {
   composerLocked: "Toma el control para responder",
   send: "Enviar",
   loading: "Cargando conversaciones…",
+  unreadCount: "{count} no leídos",
 };
 
 export const inbox = { en, es };

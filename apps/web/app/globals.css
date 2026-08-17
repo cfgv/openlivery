@@ -468,14 +468,14 @@ textarea { line-height: 1.55; }
 .inbox-tabs button.active em { color: var(--ink); background: white; }
 .inbox-row.unread strong { font-weight: 750; }
 .inbox-row.unread .inbox-row-preview { color: var(--ink); }
-.inbox-unread-dot { flex: 0 0 auto; align-self: center; width: 8px; height: 8px; border-radius: 50%; background: var(--purple); }
+.inbox-unread-count { flex: 0 0 auto; align-self: center; min-width: 18px; height: 18px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; border-radius: 20px; color: white; background: var(--purple); font-size: 10px; font-weight: 700; line-height: 1; }
 .inbox-thread { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .inbox-thread > header { min-height: 62px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .inbox-thread > header div { display: flex; flex-direction: column; }
 .inbox-thread header small { color: #7d8594; }
 .mode-toggle { min-height: 35px; padding: 0 12px; color: #4f46cf; border: 1px solid #cac6ff; border-radius: 7px; background: #f4f3ff; }
 .mode-toggle.human { color: #087a5e; border-color: #a9ddce; background: #eaf8f3; }
-.inbox-messages { padding: 22px; display: flex; flex: 1; overflow: auto; flex-direction: column; gap: 14px; }
+.inbox-messages { padding: 22px; display: flex; flex: 1; overflow: auto; overflow-anchor: none; flex-direction: column; gap: 14px; }
 .inbox-message { max-width: 75%; }
 .inbox-message.user { align-self: flex-end; }
 .inbox-message small { color: #7a8291; font-size: 11px; }
@@ -518,11 +518,15 @@ textarea { line-height: 1.55; }
 .portal-inbox > aside button > span:last-child { min-width: 0; display: flex; flex-direction: column; }
 .portal-inbox > aside strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .portal-inbox > aside small { color: #7b8391; }
+.portal-inbox-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.portal-inbox-row-top strong { flex: 1 1 auto; }
+.portal-inbox-row-top time { flex: 0 0 auto; color: #9aa1af; font-size: 11px; }
+.portal-inbox-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .portal-inbox > section { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .portal-inbox > section > header { min-height: 64px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .portal-inbox > section > header div { display: flex; flex-direction: column; }
 .portal-inbox > section > header small { color: #7d8594; }
-.portal-messages { padding: 24px; display: flex; flex: 1; overflow: auto; flex-direction: column; gap: 15px; }
+.portal-messages { padding: 24px; display: flex; flex: 1; overflow: auto; overflow-anchor: none; flex-direction: column; gap: 15px; }
 .portal-messages article { max-width: 76%; }
 .portal-messages article.user { align-self: flex-end; }
 .portal-messages small { color: #7a8291; font-size: 11px; }

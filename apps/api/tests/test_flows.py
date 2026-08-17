@@ -222,10 +222,12 @@ def test_widget_public_chat_and_gating(authenticated_client: TestClient, monkeyp
     client.post(f"/api/widget/{public_id}/messages", json={"session_id": "s1", "content": "still there?"})
     inbox_row = next(row for row in client.get("/api/conversations/inbox").json() if row["id"] == conversation_id)
     assert inbox_row["unread"] is True
+    assert inbox_row["unread_count"] >= 1
 
     assert client.post(f"/api/conversations/{conversation_id}/read").status_code == 204
     inbox_row = next(row for row in client.get("/api/conversations/inbox").json() if row["id"] == conversation_id)
     assert inbox_row["unread"] is False
+    assert inbox_row["unread_count"] == 0
 
 
 def test_inbox_pagination_and_search(authenticated_client: TestClient):
@@ -524,6 +526,7 @@ def test_white_label_portal_and_human_takeover(authenticated_client: TestClient)
     inbox = client.get(f"/api/portal/{customer['portal_slug']}/conversations")
     assert inbox.status_code == 200
     assert inbox.json()[0]["id"] == conversation["id"]
+    assert inbox.json()[0]["preview"] == ""
 
     takeover = client.patch(
         f"/api/portal/{customer['portal_slug']}/conversations/{conversation['id']}/mode",
@@ -536,6 +539,8 @@ def test_white_label_portal_and_human_takeover(authenticated_client: TestClient)
     )
     assert replied.status_code == 200
     assert replied.json()["messages"][-1]["sender_type"] == "human"
+    inbox_after = client.get(f"/api/portal/{customer['portal_slug']}/conversations")
+    assert inbox_after.json()[0]["preview"] == "Hi, I'm part of the Luna team."
 
 
 def test_provider_test_returns_models(authenticated_client: TestClient, monkeypatch):

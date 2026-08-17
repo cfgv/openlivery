@@ -106,6 +106,7 @@ export type ConversationInbox = {
   mode: "ai" | "human";
   preview: string;
   unread: boolean;
+  unread_count: number;
   updated_at: string;
 };
 export type Conversation = {
@@ -119,6 +120,7 @@ export type Conversation = {
   contact_name: string | null;
   created_at: string;
   updated_at: string;
+  preview?: string;
   messages?: Message[];
 };
 

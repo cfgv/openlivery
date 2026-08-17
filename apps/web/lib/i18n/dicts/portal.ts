@@ -46,6 +46,7 @@ const en = {
     list: {
       humanSupport: "Human support",
       aiAgent: "AI agent",
+      noMessages: "No messages yet",
     },
     conversation: {
       channel: "Channel: {channel}",
@@ -111,6 +112,7 @@ const es: typeof en = {
     list: {
       humanSupport: "Atención humana",
       aiAgent: "Agente IA",
+      noMessages: "Aún sin mensajes",
     },
     conversation: {
       channel: "Canal: {channel}",

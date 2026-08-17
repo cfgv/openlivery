@@ -279,6 +279,7 @@ class ConversationOut(ORMModel):
     contact_name: str | None = None
     created_at: datetime
     updated_at: datetime
+    preview: str = ""
 
 
 class SourceOut(BaseModel):
@@ -313,6 +314,7 @@ class ConversationInboxOut(BaseModel):
     mode: str
     preview: str = ""
     unread: bool = False
+    unread_count: int = 0
     updated_at: datetime
 
 

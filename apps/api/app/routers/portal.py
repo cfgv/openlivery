@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..config import get_settings
@@ -129,9 +129,22 @@ def portal_agents(slug: str, client: Client = Depends(_portal_client), db: Sessi
 
 @router.get("/{slug}/conversations", response_model=list[ConversationOut])
 def portal_conversations(slug: str, client: Client = Depends(_portal_client), db: Session = Depends(get_db)):
-    return db.scalars(
-        select(Conversation).where(Conversation.client_id == client.id).order_by(Conversation.updated_at.desc())
+    ranked = select(
+        Message.conversation_id.label("cid"),
+        Message.content.label("content"),
+        func.row_number().over(partition_by=Message.conversation_id, order_by=Message.created_at.desc()).label("rn"),
+    ).subquery()
+    last = select(ranked).where(ranked.c.rn == 1).subquery()
+    rows = db.execute(
+        select(Conversation, last.c.content)
+        .outerjoin(last, last.c.cid == Conversation.id)
+        .where(Conversation.client_id == client.id)
+        .order_by(Conversation.updated_at.desc())
     ).all()
+    return [
+        ConversationOut.model_validate(conv).model_copy(update={"preview": (content or "")[:140].strip()})
+        for conv, content in rows
+    ]
 
 
 @router.get("/{slug}/conversations/{conversation_id}", response_model=ConversationDetail)

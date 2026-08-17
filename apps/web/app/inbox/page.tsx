@@ -5,21 +5,16 @@ import { Inbox as InboxIcon, LoaderCircle, Search, UserRound } from "lucide-reac
 import { PageHead } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { api, messageFrom } from "@/lib/api";
-import { useT } from "@/lib/i18n";
+import { formatWhen, isSameOpenThread } from "@/lib/datetime";
+import { useLanguage, useT } from "@/lib/i18n";
 import type { Agent, Conversation, ConversationInbox } from "@/types";
 
 const LIMIT = 30;
-
-function formatWhen(iso: string): string {
-  const date = new Date(iso);
-  const sameDay = date.toDateString() === new Date().toDateString();
-  return sameDay
-    ? date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })
-    : date.toLocaleDateString("es", { day: "numeric", month: "short" });
-}
+const POLL_MS = 8000;
 
 export default function InboxPage() {
   const t = useT();
+  const { lang } = useLanguage();
   const toast = useToast();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [items, setItems] = useState<ConversationInbox[]>([]);
@@ -57,21 +52,54 @@ export default function InboxPage() {
     return params.toString();
   }, [agentId, channel, tab, search]);
 
-  const loadFirst = useCallback(async () => {
-    setLoading(true);
+  const selectedIdRef = useRef<string | null>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected]);
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (!el) return;
+    const frame = requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    return () => cancelAnimationFrame(frame);
+  }, [selected?.id, selected?.messages?.at(-1)?.id]);
+
+  const loadFirst = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
       const rows = await api<ConversationInbox[]>(`/conversations/inbox?${buildParams(0)}`);
       setItems(rows); setOffset(rows.length); setHasMore(rows.length === LIMIT);
-    } catch (err) { toast.error(messageFrom(err)); } finally { setLoading(false); }
+    } catch (err) {
+      if (!opts?.silent) toast.error(messageFrom(err));
+    } finally {
+      if (!opts?.silent) setLoading(false);
+    }
   }, [buildParams, toast]);
+
+  const refreshSelected = useCallback(async () => {
+    const id = selectedIdRef.current;
+    if (!id) return;
+    try {
+      const conv = await api<Conversation>(`/conversations/${id}`);
+      if (selectedIdRef.current !== id) return;
+      setSelected((prev) => (isSameOpenThread(prev, conv) ? prev : conv));
+      setItems((rows) => rows.map((row) => (row.id === id ? { ...row, unread: false, unread_count: 0 } : row)));
+      api(`/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+    } catch {
+      // Poll failures should not interrupt the open thread.
+    }
+  }, []);
 
   useEffect(() => { loadFirst(); }, [loadFirst]);
 
-  // Live refresh of the first page (skipped once the user scrolls into older pages).
+  // Live refresh of the first page and the open thread (skipped once the user scrolls into older pages).
   useEffect(() => {
-    const id = setInterval(() => { if (offset <= LIMIT) loadFirst(); }, 12000);
+    const id = setInterval(() => {
+      if (offset <= LIMIT) {
+        loadFirst({ silent: true });
+        refreshSelected();
+      }
+    }, POLL_MS);
     return () => clearInterval(id);
-  }, [loadFirst, offset]);
+  }, [loadFirst, refreshSelected, offset]);
 
   async function loadMore() {
     if (loadingMore || !hasMore) return;
@@ -88,15 +116,16 @@ export default function InboxPage() {
   }
 
   async function choose(id: string) {
+    selectedIdRef.current = id;
     setSelected(await api<Conversation>(`/conversations/${id}`));
-    setItems((rows) => rows.map((row) => (row.id === id ? { ...row, unread: false } : row)));
+    setItems((rows) => rows.map((row) => (row.id === id ? { ...row, unread: false, unread_count: 0 } : row)));
     api(`/conversations/${id}/read`, { method: "POST" }).catch(() => {});
   }
 
   async function toggleMode(next: "ai" | "human") {
     if (!selected) return;
     setSelected(await api<Conversation>(`/conversations/${selected.id}/mode`, { method: "PATCH", body: JSON.stringify({ mode: next }) }));
-    loadFirst();
+    loadFirst({ silent: true });
   }
 
   const composerRef = useRef<HTMLInputElement>(null);
@@ -109,7 +138,7 @@ export default function InboxPage() {
     try {
       setSelected(await api<Conversation>(`/conversations/${selected.id}/reply`, { method: "POST", body: JSON.stringify({ content: data.get("content") }) }));
       form.reset();
-      loadFirst();
+      loadFirst({ silent: true });
     } catch (err) { toast.error(messageFrom(err)); } finally { setBusy(false); composerRef.current?.focus(); }
   }
 
@@ -136,11 +165,11 @@ export default function InboxPage() {
               <button key={item.id} className={`inbox-row ${selected?.id === item.id ? "active" : ""} ${item.unread ? "unread" : ""}`} onClick={() => choose(item.id)}>
                 <span className="entity-avatar tiny"><UserRound size={15} /></span>
                 <span className="inbox-row-body">
-                  <span className="inbox-row-top"><strong>{item.contact_name || item.title}</strong><time>{formatWhen(item.updated_at)}</time></span>
+                  <span className="inbox-row-top"><strong>{item.contact_name || item.title}</strong><time>{formatWhen(item.updated_at, lang)}</time></span>
                   <small className="inbox-row-preview">{item.preview || t("inbox.noMessages")}</small>
                   <small className="inbox-row-meta">{item.agent_name} · {channelLabel(item.channel)} <span className={`mini-badge ${item.mode}`}>{item.mode === "human" ? t("inbox.modeHuman") : t("inbox.modeAi")}</span></small>
                 </span>
-                {item.unread && <span className="inbox-unread-dot" />}
+                {item.unread_count > 0 && selected?.id !== item.id && <span className="inbox-unread-count" aria-label={t("inbox.unreadCount", { count: item.unread_count })}>{item.unread_count > 99 ? "99+" : item.unread_count}</span>}
               </button>
             ))}
             {loadingMore && <div className="no-conversations"><LoaderCircle className="spin" size={15} /></div>}
@@ -154,10 +183,10 @@ export default function InboxPage() {
               <div><strong>{selected.contact_name || selected.title}</strong><small>{channelLabel(selected.channel)}</small></div>
               <button className={`mode-toggle ${selected.mode}`} onClick={() => toggleMode(selected.mode === "ai" ? "human" : "ai")}>{selected.mode === "ai" ? t("inbox.takeControl") : t("inbox.returnToAi")}</button>
             </header>
-            <div className="inbox-messages">
+            <div className="inbox-messages" ref={messagesRef}>
               {selected.messages?.map((message) => (
                 <div key={message.id} className={`inbox-message ${message.role}`}>
-                  <small>{message.sender_name || (message.role === "assistant" ? t("inbox.senderAgent") : t("inbox.senderVisitor"))} · {formatWhen(message.created_at)}</small>
+                  <small>{message.sender_name || (message.role === "assistant" ? t("inbox.senderAgent") : t("inbox.senderVisitor"))} · {formatWhen(message.created_at, lang)}</small>
                   <p>{message.content}</p>
                 </div>
               ))}

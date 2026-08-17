@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..database import get_db
@@ -80,15 +80,22 @@ def inbox(
         func.row_number().over(partition_by=Message.conversation_id, order_by=Message.created_at.desc()).label("rn"),
     ).subquery()
     last = select(ranked).where(ranked.c.rn == 1).subquery()
+    unread_counts = (
+        select(Message.conversation_id.label("cid"), func.count(Message.id).label("n"))
+        .join(Conversation, Conversation.id == Message.conversation_id)
+        .where(
+            Message.sender_type == "visitor",
+            or_(Conversation.operator_read_at.is_(None), Message.created_at > Conversation.operator_read_at),
+        )
+        .group_by(Message.conversation_id)
+    ).subquery()
+    unread_count = func.coalesce(unread_counts.c.n, 0)
 
-    is_unread = and_(
-        last.c.sender_type == "visitor",
-        or_(Conversation.operator_read_at.is_(None), last.c.created_at > Conversation.operator_read_at),
-    )
     query = (
-        select(Conversation, Agent.name, last.c.content, is_unread.label("unread"))
+        select(Conversation, Agent.name, last.c.content, unread_count.label("unread_count"))
         .join(Agent, Agent.id == Conversation.agent_id)
         .outerjoin(last, last.c.cid == Conversation.id)
+        .outerjoin(unread_counts, unread_counts.c.cid == Conversation.id)
         .where(Conversation.agency_id == user.agency_id)
     )
     if agent_id:
@@ -98,7 +105,7 @@ def inbox(
     if mode in ("ai", "human"):
         query = query.where(Conversation.mode == mode)
     if unread:
-        query = query.where(is_unread)
+        query = query.where(unread_count > 0)
     if search and search.strip():
         term = f"%{search.strip().lower()}%"
         query = query.where(
@@ -120,10 +127,11 @@ def inbox(
             "channel": conv.channel,
             "mode": conv.mode,
             "preview": (content or "")[:140].strip(),
-            "unread": bool(row_unread),
+            "unread": int(row_unread_count) > 0,
+            "unread_count": int(row_unread_count),
             "updated_at": conv.updated_at,
         }
-        for conv, agent_name, content, row_unread in rows
+        for conv, agent_name, content, row_unread_count in rows
     ]
 
 
