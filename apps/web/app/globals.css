@@ -306,6 +306,7 @@ textarea { line-height: 1.55; }
 .url-preview button, .url-preview a { display: inline-flex; align-items: center; gap: 5px; color: #5149d1; border: 0; background: transparent; font-size: 12px; }
 
 .section-block { margin-top: 38px; }
+.section-block .form-section + .form-section { margin-top: 16px; }
 .section-heading { margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .section-heading h2 { margin: 0 0 4px; font-size: 20px; }
 .section-heading p { margin: 0; color: #687082; font-size: 14px; }
