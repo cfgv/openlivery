@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Inbox as InboxIcon, LoaderCircle, Search, UserRound } from "lucide-react";
+import { FlaskConical, Globe, Inbox as InboxIcon, LoaderCircle, MessageCircle, Search, UserRound } from "lucide-react";
 import { PageHead } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { api, messageFrom } from "@/lib/api";
@@ -43,6 +43,13 @@ export default function InboxPage() {
     if (value === "whatsapp") return t("inbox.channelWhatsapp");
     if (value === "widget") return t("inbox.channelWidget");
     return value;
+  };
+
+  const channelIcon = (value: string) => {
+    if (value === "whatsapp") return <MessageCircle size={10} />;
+    if (value === "widget") return <Globe size={10} />;
+    if (value === "playground") return <FlaskConical size={10} />;
+    return <MessageCircle size={10} />;
   };
 
   const buildParams = useCallback((offsetValue: number) => {
@@ -134,7 +141,10 @@ export default function InboxPage() {
           : items.length ? <>
             {items.map((item) => (
               <button key={item.id} className={`inbox-row ${selected?.id === item.id ? "active" : ""} ${item.unread ? "unread" : ""}`} onClick={() => choose(item.id)}>
-                <span className="entity-avatar tiny"><UserRound size={15} /></span>
+                <span className="inbox-avatar">
+                  <span className="entity-avatar tiny"><UserRound size={15} /></span>
+                  <span className={`channel-badge ${item.channel}`} title={channelLabel(item.channel)}>{channelIcon(item.channel)}</span>
+                </span>
                 <span className="inbox-row-body">
                   <span className="inbox-row-top"><strong>{item.contact_name || item.title}</strong><time>{formatWhen(item.updated_at)}</time></span>
                   <small className="inbox-row-preview">{item.preview || t("inbox.noMessages")}</small>

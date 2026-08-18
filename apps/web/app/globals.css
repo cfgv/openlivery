@@ -257,6 +257,11 @@ textarea { line-height: 1.55; }
 .entity-avatar { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; color: #5149cf; border: 1px solid #dddafe; border-radius: 7px; background: #f1f0ff; font-size: 13px; font-weight: 700; }
 .entity-avatar.xl { width: 54px; height: 54px; border-radius: 10px; font-size: 17px; }
 .entity-avatar.tiny { width: 30px; height: 30px; border-radius: 50%; }
+.inbox-avatar { position: relative; flex: 0 0 auto; }
+.channel-badge { position: absolute; right: -3px; bottom: -3px; width: 16px; height: 16px; display: grid; place-items: center; color: white; border: 2px solid white; border-radius: 50%; }
+.channel-badge.whatsapp { background: #25a56a; }
+.channel-badge.widget { background: #2f6df0; }
+.channel-badge.playground { background: #7c5cff; }
 .row-arrow { width: 34px; height: 34px; display: grid; place-items: center; color: #737b8b; border-radius: 6px; }
 .row-arrow:hover { color: #5149e8; background: #efeeff; }
 .table-link { color: #4f46d4; font-weight: 550; }
