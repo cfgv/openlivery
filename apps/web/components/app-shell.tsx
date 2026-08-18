@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Bot, Building2, Inbox, LayoutDashboard, LogOut, Menu, MessageSquareText, Radio, Settings, X } from "lucide-react";
+import { Bot, Building2, CreditCard, Inbox, LayoutDashboard, LogOut, Menu, MessageSquareText, Radio, Settings, Sparkles, Wallet, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { useT, type I18nKey } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -25,6 +25,25 @@ const EXTRA_PUBLIC_PATHS = (process.env.NEXT_PUBLIC_PUBLIC_PATHS || "")
   .split(",")
   .map((path) => path.trim())
   .filter(Boolean);
+
+const EXTRA_NAV_ICONS: Record<string, typeof LayoutDashboard> = {
+  wallet: Wallet,
+  "credit-card": CreditCard,
+  billing: Wallet,
+  sparkles: Sparkles,
+};
+
+// Extra sidebar links (comma-separated `label|href|icon`, baked at build). Lets a
+// deployment add nav entries without patching the shell; icon falls back to Wallet.
+const EXTRA_NAV = (process.env.NEXT_PUBLIC_EXTRA_NAV || "")
+  .split(",")
+  .map((entry) => entry.trim())
+  .filter(Boolean)
+  .map((entry) => {
+    const [label, href, icon] = entry.split("|").map((part) => (part || "").trim());
+    return { label, href, icon: EXTRA_NAV_ICONS[icon] || Wallet };
+  })
+  .filter((item) => item.label && item.href);
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -74,6 +93,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           {navigation.map((item) => {
             const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return <Link key={item.href} href={item.href} className={active ? "active" : ""} onClick={() => setMobileOpen(false)}><item.icon size={18} /><span>{t(item.labelKey)}</span></Link>;
+          })}
+          {EXTRA_NAV.map((item) => {
+            const Icon = item.icon;
+            const active = pathname.startsWith(item.href);
+            return <Link key={item.href} href={item.href} className={active ? "active" : ""} onClick={() => setMobileOpen(false)}><Icon size={18} /><span>{item.label}</span></Link>;
           })}
         </nav>
         <div className="sidebar-foot">
