@@ -22,6 +22,13 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
       ...options.headers,
     },
   });
+  // A deployment can gate a request by returning this header (e.g. a lapsed
+  // subscription); follow it instead of surfacing the error to the caller.
+  const redirectTo = response.headers.get("X-Redirect-To");
+  if (redirectTo && typeof window !== "undefined" && window.location.pathname !== redirectTo) {
+    window.location.assign(redirectTo);
+    return new Promise<T>(() => {}); // never resolves; the page is navigating away
+  }
   if (!response.ok) {
     let message = "An unexpected error occurred";
     try {
