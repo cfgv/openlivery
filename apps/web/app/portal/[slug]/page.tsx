@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { Bot, Building2, Inbox, LoaderCircle, LogOut, MessageSquareText, Send, ShieldCheck, UserRound } from "lucide-react";
 import { Alert, EmptyState } from "@/components/ui";
 import { api, ApiError, messageFrom } from "@/lib/api";
-import { formatWhen, isSameOpenThread } from "@/lib/datetime";
+import { formatWhen, isNearBottom, isSameOpenThread } from "@/lib/datetime";
 import { useLanguage, useT } from "@/lib/i18n";
 import type { Conversation, PortalPublic } from "@/types";
 
@@ -39,11 +39,18 @@ function PortalInbox({ slug, portal, logout }: { slug: string; portal: PortalPub
   const selectedIdRef = useRef<string | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected]);
+  const wasNearBottomRef = useRef(true);
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (el) { const handler = () => { wasNearBottomRef.current = isNearBottom(el); }; el.addEventListener("scroll", handler, { passive: true }); return () => el.removeEventListener("scroll", handler); }
+  }, [selected?.id]);
   useEffect(() => {
     const el = messagesRef.current;
     if (!el) return;
-    const frame = requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
-    return () => cancelAnimationFrame(frame);
+    if (wasNearBottomRef.current) {
+      const frame = requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+      return () => cancelAnimationFrame(frame);
+    }
   }, [selected?.id, selected?.messages?.at(-1)?.id]);
 
   const refresh = useCallback(async () => {

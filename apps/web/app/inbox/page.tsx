@@ -5,7 +5,7 @@ import { Inbox as InboxIcon, LoaderCircle, Search, UserRound } from "lucide-reac
 import { PageHead } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { api, messageFrom } from "@/lib/api";
-import { formatWhen, isSameOpenThread } from "@/lib/datetime";
+import { formatWhen, isNearBottom, isSameOpenThread } from "@/lib/datetime";
 import { useLanguage, useT } from "@/lib/i18n";
 import type { Agent, Conversation, ConversationInbox } from "@/types";
 
@@ -55,11 +55,18 @@ export default function InboxPage() {
   const selectedIdRef = useRef<string | null>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected]);
+  const wasNearBottomRef = useRef(true);
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (el) { const handler = () => { wasNearBottomRef.current = isNearBottom(el); }; el.addEventListener("scroll", handler, { passive: true }); return () => el.removeEventListener("scroll", handler); }
+  }, [selected?.id]);
   useEffect(() => {
     const el = messagesRef.current;
     if (!el) return;
-    const frame = requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
-    return () => cancelAnimationFrame(frame);
+    if (wasNearBottomRef.current) {
+      const frame = requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+      return () => cancelAnimationFrame(frame);
+    }
   }, [selected?.id, selected?.messages?.at(-1)?.id]);
 
   const loadFirst = useCallback(async (opts?: { silent?: boolean }) => {
@@ -80,9 +87,12 @@ export default function InboxPage() {
     try {
       const conv = await api<Conversation>(`/conversations/${id}`);
       if (selectedIdRef.current !== id) return;
-      setSelected((prev) => (isSameOpenThread(prev, conv) ? prev : conv));
-      setItems((rows) => rows.map((row) => (row.id === id ? { ...row, unread: false, unread_count: 0 } : row)));
-      api(`/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+      setSelected((prev) => {
+        if (isSameOpenThread(prev, conv)) return prev;
+        setItems((rows) => rows.map((row) => (row.id === id ? { ...row, unread: false, unread_count: 0 } : row)));
+        api(`/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+        return conv;
+      });
     } catch {
       // Poll failures should not interrupt the open thread.
     }

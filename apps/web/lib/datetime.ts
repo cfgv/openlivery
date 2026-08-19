@@ -18,3 +18,8 @@ export function isSameOpenThread(prev: Conversation | null, next: Conversation):
   if (prevMessages.length !== nextMessages.length) return false;
   return prevMessages.at(-1)?.id === nextMessages.at(-1)?.id;
 }
+
+/** True when the scroll container is near the bottom (within a threshold). */
+export function isNearBottom(el: HTMLElement, threshold: number = 150): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+}
