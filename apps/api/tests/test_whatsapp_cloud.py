@@ -85,7 +85,7 @@ def _setup_channel(client: TestClient, *, image_enabled: bool = False) -> tuple[
     return customer, agent, channel
 
 
-def test_configure_channel_hides_secrets(authenticated_client: TestClient):
+def test_configure_channel_hides_secrets(authenticated_client: TestClient, monkeypatch):
     client = authenticated_client
     customer, agent, channel = _setup_channel(client)
     assert channel["has_access_token"] is True
@@ -110,16 +110,12 @@ def test_configure_channel_hides_secrets(authenticated_client: TestClient):
 
     # Another agency cannot see the channel. Registration closes after the
     # first agency, so allow a second one just for this check.
-    settings = get_settings()
-    settings.allow_multi_agency = True
-    try:
-        other = client.post(
-            "/api/auth/register",
-            json={"agency_name": "Other", "name": "Eve", "email": "eve@other.com", "password": "another-password"},
-        )
-        assert other.status_code == 201
-    finally:
-        settings.allow_multi_agency = False
+    monkeypatch.setattr(get_settings(), "allow_multi_agency", True)
+    other = client.post(
+        "/api/auth/register",
+        json={"agency_name": "Other", "name": "Eve", "email": "eve@other.com", "password": "another-password"},
+    )
+    assert other.status_code == 201
     assert client.get(f"/api/whatsapp-cloud/channels/{customer['id']}").status_code == 404
 
 

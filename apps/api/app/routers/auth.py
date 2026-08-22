@@ -34,7 +34,7 @@ def _registration_open(db: Session) -> bool:
     return db.scalar(select(Agency.id).limit(1)) is None
 
 
-@router.get("/status")
+@router.get("/status", dependencies=[Depends(login_rate_limit)])
 def auth_status(db: Session = Depends(get_db)):
     # Public: lets the login page decide between first-run setup (no agency
     # yet) and sign-in only (single-agency instance already configured).
